@@ -10,21 +10,13 @@ const app = express();
 
 app.use(cors({
   origin: "*",
-  methods: "GET,POST,PUT,DELETE,OPTIONS",
-  allowedHeaders: ["Content-Type", "Authorization"],
-  preflightContinue: false,
-  optionsSuccessStatus: 200
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
-
-app.options("(.*)", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.sendStatus(200);
-});
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+
 
 
 const pool = mysql.createPool({

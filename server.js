@@ -16,8 +16,7 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// Manejo explícito de preflight OPTIONS
-app.options("*", (req, res) => {
+app.options("(.*)", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");

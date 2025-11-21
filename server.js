@@ -5,6 +5,7 @@ import mysql from "mysql2/promise";
 import PDFDocument from "pdfkit";
 import nodemailer from "nodemailer";
 import { PassThrough } from "stream";
+import fetch from "node-fetch";
 
 const app = express();
 
@@ -268,47 +269,49 @@ app.post("/api/enviarCorreo", async (req, res) => {
     if (!email || !titulo || !contenido)
       return safeJson(res, 400, { error: "Faltan datos" });
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
     const doc = new PDFDocument();
     const buffers = [];
 
-    doc.on("data", (chunk) => buffers.push(chunk));
-
+    doc.on("data", buffer => buffers.push(buffer));
     doc.on("end", async () => {
       const pdfBuffer = Buffer.concat(buffers);
 
-      try {
-        await transporter.sendMail({
-          from: `"MatchTech" <${process.env.EMAIL_USER}>"`,
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          from: "MatchTech <noreply@matchtech.app>",
           to: email,
           subject: `Chat compartido: ${titulo}`,
-          text: "Adjunto el PDF con tu chat.",
+          text: "Adjunto el PDF con tu conversación.",
           attachments: [
             {
               filename: `${titulo}.pdf`,
-              content: pdfBuffer,
-            },
-          ],
-        });
+              content: pdfBuffer.toString("base64"),
+              type: "application/pdf"
+            }
+          ]
+        })
+      });
 
-        return safeJson(res, 200, { mensaje: "Correo enviado" });
-      } catch (err) {
-        console.error("❌ Error enviando correo:", err);
-        return safeJson(res, 500, { error: "No se pudo enviar el correo" });
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Error Resend:", data);
+        return safeJson(res, 500, { error: "Error enviando correo" });
       }
+
+      safeJson(res, 200, { mensaje: "Correo enviado" });
     });
 
     doc.fontSize(24).text(titulo, { align: "center" });
     doc.moveDown();
     doc.fontSize(12).text(contenido);
     doc.end();
+
   } catch (error) {
     console.error("❌ Error en enviarCorreo:", error);
     return safeJson(res, 500, { error: "Error interno" });

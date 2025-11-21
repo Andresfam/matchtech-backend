@@ -283,7 +283,7 @@ app.post("/api/enviarCorreo", async (req, res) => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          from: "MatchTech <noreply@matchtech.app>",
+          from: "MatchTech <onboarding@resend.dev>",
           to: email,
           subject: `Chat compartido: ${titulo}`,
           text: "Adjunto el PDF con tu conversación.",
